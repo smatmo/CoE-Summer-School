@@ -1,0 +1,25 @@
+git clone https://github.com/april-tools/gekcs
+cd gekcs
+virtualenv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+
+pip3 install "numpy<2"      # if numpy makes troubles
+
+cd src/
+mkdir src_data/
+mkdir src_data/FB15K-237
+mkdir src_data/WN18RR
+
+git clone https://github.com/villmow/datasets_knowledge_embedding
+cp datasets_knowledge_embedding/FB15k-237/*.txt src_data/FB15K-237/
+cp datasets_knowledge_embedding/WN18RR/text/*.txt src_data/WN18RR/
+rm -rf datasets_knowledge_embedding/
+python -m kbc.preprocess src_data --datasets "FB15K-237 WN18RR"
+
+
+python -m kbc.experiment --experiment_id PLL --wandb True --model_cache_path "models" --dataset FB15K-237 --model ComplEx --rank 1000 --batch_size 1000 --optimizer Adam --learning_rate 1e-3 --score_lhs True --score_rel True --score_rhs True --device cuda
+
+python -m kbc.experiment --experiment_id MLE --wandb True --model_cache_path "models" --dataset FB15K-237 --model SquaredComplEx --rank 1000 --batch_size 1000 --optimizer Adam --learning_rate 1e-3 --score_ll True --device cuda
+
+python -m kbc.experiment --experiment_id MLE --dataset FB15K-237 --model SquaredCP --rank 1000 --optimizer Adam --batch_size 1000 --learning_rate 0.001 --score_ll True
